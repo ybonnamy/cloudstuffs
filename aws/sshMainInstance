@@ -1,0 +1,1 @@
+ssh -i /home/cloudshell-user/.ssh/MainKeyPair.pem ec2-user@$(ansible-inventory -i aws_ec2.yml --host tag_Name_MainInstance | jq -r .public_dns_name)
