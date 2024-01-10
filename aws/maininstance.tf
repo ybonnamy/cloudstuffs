@@ -34,6 +34,14 @@ resource "aws_instance" "maininstance" {
     Role    = "OAM"
   }
 
+  root_block_device {
+    volume_size           = "20"
+    volume_type           = "gp2"
+    encrypted             = true
+    kms_key_id            = "2f545a27-40fc-4a92-b8cb-3ed8c35f59e3"
+    delete_on_termination = true
+  }
+
   provisioner "remote-exec" {
     inline = ["sudo hostnamectl set-hostname ${var.instance_name_maininstance}"]
   }
