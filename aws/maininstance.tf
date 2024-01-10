@@ -1,3 +1,11 @@
+variable "instance_name_maininstance" {
+  description = "Value of the Name tag for the EC2 instance"
+  type        = string
+  default     = "MainInstance"
+}
+
+
+
 data "aws_ami" "latestamazon2" {
   most_recent = true
   filter {
@@ -21,10 +29,20 @@ resource "aws_instance" "maininstance" {
   associate_public_ip_address = true
   key_name                    = var.main_key_name
   tags = {
-    Name    = "MainInstance"
+    Name    = var.instance_name_maininstance
     Purpose = "LAB"
     Role    = "OAM"
   }
 
+  provisioner "remote-exec" {
+    inline = ["sudo hostnamectl set-hostname ${var.instance_name_maininstance}"]
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = file(var.private_key)
+    host        = self.public_ip
+  }
 }
 
