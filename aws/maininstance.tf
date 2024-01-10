@@ -10,7 +10,7 @@ data "aws_ami" "latestamazon2" {
   most_recent = true
   filter {
     name   = "name"
-    values = ["amzn2-ami-*-hvm-*-x86_64-gp2"]
+    values = ["amzn2-ami-hvm-*"]
   }
   filter {
     name   = "architecture"
@@ -45,6 +45,12 @@ resource "aws_instance" "maininstance" {
   provisioner "remote-exec" {
     inline = ["sudo hostnamectl set-hostname ${var.instance_name_maininstance}"]
   }
+
+  provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ec2-user  --private-key ${var.private_key} -i ~/cloudstuffs/aws/aws_ec2.yml -l tag_Name_${self.tags.Name} ansible/first-install.yml"
+    //command = "/bin/true"
+  }
+
 
   connection {
     type        = "ssh"
