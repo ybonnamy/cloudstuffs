@@ -19,7 +19,7 @@ variable "main_key_name" {
 variable "private_key" {
   description = "private_key "
   type        = string
-  default     = "/home/cloudshell-user/.ssh/MainKeyPair.pem"
+  default     = "~/.ssh/MainKeyPair.pem"
 }
 
 
