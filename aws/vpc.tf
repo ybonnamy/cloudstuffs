@@ -22,6 +22,20 @@ resource "aws_subnet" "subnet_main" {
   }
 }
 
+resource "aws_subnet" "subnet_twentythree" {
+  vpc_id                                         = aws_vpc.vpc_main.id
+  cidr_block                                     = "192.168.23.0/24"
+  ipv6_cidr_block                                = cidrsubnet(aws_vpc.vpc_main.ipv6_cidr_block, 8, 1)
+  availability_zone                              = var.availability_zone_name
+  enable_resource_name_dns_a_record_on_launch    = true
+  enable_resource_name_dns_aaaa_record_on_launch = true
+  assign_ipv6_address_on_creation                = true
+  map_public_ip_on_launch                        = true
+  tags = {
+    Name = "Additional Public Subnet"
+  }
+}
+
 resource "aws_internet_gateway" "ig_main" {
   vpc_id = aws_vpc.vpc_main.id
   tags = {
