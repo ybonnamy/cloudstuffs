@@ -1,0 +1,13 @@
+
+
+plugin: gcp_compute
+auth_kind: application
+projects:
+  - personalcloud-410910
+keyed_groups:
+  - key: labels
+    prefix: label
+  - key: zone
+    prefix: zone
+
+  
