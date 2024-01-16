@@ -1,4 +1,8 @@
 declare -x GOOGLE_CLOUD_PROJECT=personalcloud-410910
-cloud config set project personalcloud-410910
-echo gcloud auth login
-echo gcloud auth application-default login
+gcloud config set project $GOOGLE_CLOUD_PROJECT
+gcloud auth login
+gcloud auth application-default login
+gcloud iam service-accounts keys create key.json --iam-account=$SA@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com
+export GOOGLE_APPLICATION_CREDENTIALS=key.json
+gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID --member serviceAccount:$SA@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com --role roles/editor
+
