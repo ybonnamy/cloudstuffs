@@ -1,0 +1,4 @@
+declare -x GOOGLE_CLOUD_PROJECT=personalcloud-410910
+cloud config set project personalcloud-410910
+echo gcloud auth login
+echo gcloud auth application-default login
