@@ -29,4 +29,18 @@
       community.general.timezone:
         name: Europe/Paris
 
+    - name: Upgrade all packages
+      become: true
+      become_user: root
+      ansible.builtin.yum:
+        name: '*'
+        state: latest
 
+    - name: Install a list of packages
+      become: true
+      become_user: root
+      ansible.builtin.yum:
+        name:
+          - nmap-ncat
+          - nmap
+        state: present
