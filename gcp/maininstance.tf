@@ -31,7 +31,7 @@ resource "google_compute_instance" "main-instance-1" {
   can_ip_forward      = false
   deletion_protection = false
   enable_display      = true
-  machine_type        = "e2-small"
+  machine_type        = "e2-medium"
 
   metadata = {
     enable-osconfig = "TRUE"

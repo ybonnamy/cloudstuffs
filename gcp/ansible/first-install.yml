@@ -39,4 +39,23 @@
         pkg:
          - dnsutils
 
+    - name: Update and upgrade apt packages
+      become: true
+      become_user: root
+      apt:
+        upgrade: dist
+        update_cache: yes
+        autoremove: yes
+        autoclean: yes
+        cache_valid_time: 3600  # One day
 
+    - name: Check if reboot required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+    
+    - name: Reboot if required
+      become: true
+      become_user: root
+      reboot:
+      when: reboot_required_file.stat.exists == true
