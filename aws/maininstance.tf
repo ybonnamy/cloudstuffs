@@ -32,6 +32,7 @@ resource "aws_instance" "maininstance" {
     Name    = var.instance_name_maininstance
     Purpose = "LAB"
     Role    = "OAM"
+	
   }
 
   root_block_device {
@@ -60,3 +61,18 @@ resource "aws_instance" "maininstance" {
   }
 }
 
+resource "aws_route53_record" "maininstanceipv4" {
+  zone_id = data.aws_route53_zone.ybonnamyname.zone_id
+  name    = "${var.instance_name_maininstance}.${var.publicdomainname}"
+  type    = "A"
+  ttl     = 300
+  records = [aws_instance.maininstance.public_ip]
+}
+
+resource "aws_route53_record" "maininstanceipv6" {
+  zone_id = data.aws_route53_zone.ybonnamyname.zone_id
+  name    = "${var.instance_name_maininstance}.${var.publicdomainname}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [aws_instance.maininstance.ipv6_addresses[0]]
+}

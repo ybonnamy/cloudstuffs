@@ -22,4 +22,13 @@ variable "private_key" {
   default     = "~/.ssh/MainKeyPair.pem"
 }
 
+variable "publicdomainname" {
+  description = "domain name for public ip resolutions"
+  type        = string
+  default     = "aws.ybonnamy.name"
+}
 
+data "aws_route53_zone" "ybonnamyname" {
+  name         = "ybonnamy.name."
+  private_zone = false
+}
