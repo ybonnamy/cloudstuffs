@@ -36,9 +36,10 @@ resource "google_compute_subnetwork" "main" {
   }
 }
 
-resource "google_compute_firewall" "allow-basics" {
-  name    = "allow-basics"
+resource "google_compute_firewall" "allow-basics-ipv4" {
+  name    = "allow-basics-ipv4"
   network = google_compute_network.main.id
+
   allow {
     protocol = "icmp"
   }
@@ -48,4 +49,19 @@ resource "google_compute_firewall" "allow-basics" {
     ports    = ["80", "443", "22"]
   }
   source_ranges = ["0.0.0.0/0"]
+}
+
+resource "google_compute_firewall" "allow-basics-ipv6" {
+  name    = "allow-basics-ipv6"
+  network = google_compute_network.main.id
+
+  allow {
+    protocol = "58"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443", "22"]
+  }
+  source_ranges = ["::/0"]
 }
