@@ -59,19 +59,7 @@
       become_user: root
       reboot:
       when: reboot_required_file.stat.exists == true
-
-    - debug : var=hostvars[inventory_hostname]['ansible_facts']['hostname']
-
-    - debug : var=hostvars[inventory_hostname]['ansible_default_ipv6']['address']
-
-    - debug : var=publicdomainname
-
-    - name: prepare register
-      local_action: 
-        module: copy 
-        content: "{{ hostvars[inventory_hostname]['ansible_default_ipv6']['address'] }} {{ publicdomainname }}"
-        dest: /tmp/file
-      
+ 
     - name: Add AAAA
       local_action: 
         module: amazon.aws.route53
