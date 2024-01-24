@@ -11,7 +11,7 @@ resource "google_compute_instance" "main-instance-1" {
     device_name = var.instance_name_maininstance
 
     initialize_params {
-      image = "projects/debian-cloud/global/images/debian-11-bullseye-v20231212"
+      image = "debian-cloud/debian-11"
       size  = 10
       type  = "pd-standard"
     }
@@ -82,3 +82,20 @@ resource "google_compute_instance" "main-instance-1" {
   }
 
 }
+
+resource "aws_route53_record" "maininstanceipv4" {
+  zone_id = data.aws_route53_zone.ybonnamyname.zone_id
+  name    = "${var.instance_name_maininstance}.${var.publicdomainname}"
+  type    = "A"
+  ttl     = 300
+  records = [google_compute_instance.main-instance-1.network_interface[0].access_config[0].nat_ip]
+}
+
+#below seems impossible with current terraform - worked around with ansible 
+# resource "aws_route53_record" "maininstanceipv6" {
+#   zone_id = data.aws_route53_zone.ybonnamyname.zone_id
+#   name    = "${var.instance_name_maininstance}.${var.publicdomainname}"
+#   type    = "AAAA"
+#   ttl     = 300
+#   records = [google_compute_instance.main-instance-1.network_interface[0].ipv6_access_config[0].external_ipv6]
+# }
