@@ -11,7 +11,7 @@ resource "google_compute_instance" "main-instance-1" {
     device_name = var.instance_name_maininstance
 
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = data.google_compute_image.ubuntu.self_link
       size  = 10
       type  = "pd-standard"
     }
