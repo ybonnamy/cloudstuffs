@@ -38,9 +38,8 @@ resource "google_compute_instance" "main-instance-1" {
     #ssh-keys        = "user:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkQ/4I65lRavhUi5xsaJAgqAMEdw+DfRiPc/S9Gzddc"
 
     "ssh-keys" = <<EOT
-         linux:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkQ/4I65lRavhUi5xsaJAgqAMEdw+DfRiPc/S9Gzddc
-         linux:ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAq+4cfLij6BjRQvl0PKyUkSVa8c54/7+FSclRzwR1M4npKJ2a8XX6LAaZoIsrzoTmHfDLK2bZICcyHDx+ek8rDi22rO8Cz30FvI1KNztDABEsqu2otmF6oqiq3clrcOoDMgo2WZSibATzGCuNq1Xvt2Z/G6WEZ34zsdmbgnYMnZ3/M1iOwvbGNeTl7fPMCljreN5bUZPXOGLTndUjIcbel91aQ433v0RL7koZaQBJsG42xmutKkx6v0IuHimVLGmNLGsK57GLHjFP8dm4jv8YJuTAiy+0NIOS6iKFgpdror9+o2aaGzCi4zuvhnHf1M1h6ytdbPSU/YFSXKTr+dxbCw== mobaxterm@pcoam
-         adm-infra:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkQ/4I65lRavhUi5xsaJAgqAMEdw+DfRiPc/S9Gzddc
+         ${var.provisionninguser}:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkQ/4I65lRavhUi5xsaJAgqAMEdw+DfRiPc/S9Gzddc
+         ${var.provisionninguser}:ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAq+4cfLij6BjRQvl0PKyUkSVa8c54/7+FSclRzwR1M4npKJ2a8XX6LAaZoIsrzoTmHfDLK2bZICcyHDx+ek8rDi22rO8Cz30FvI1KNztDABEsqu2otmF6oqiq3clrcOoDMgo2WZSibATzGCuNq1Xvt2Z/G6WEZ34zsdmbgnYMnZ3/M1iOwvbGNeTl7fPMCljreN5bUZPXOGLTndUjIcbel91aQ433v0RL7koZaQBJsG42xmutKkx6v0IuHimVLGmNLGsK57GLHjFP8dm4jv8YJuTAiy+0NIOS6iKFgpdror9+o2aaGzCi4zuvhnHf1M1h6ytdbPSU/YFSXKTr+dxbCw== mobaxterm@pcoam
      EOT
   }
 
@@ -67,7 +66,7 @@ resource "google_compute_instance" "main-instance-1" {
 
   connection {
     type        = "ssh"
-    user        = "linux"
+    user        = var.provisionninguser
     private_key = file(var.private_key)
     host        = self.network_interface[0].access_config[0].nat_ip
   }
@@ -77,7 +76,7 @@ resource "google_compute_instance" "main-instance-1" {
     inline = ["echo 'connected!'"]
   }
   provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u linux  --private-key ${var.private_key} -i ~/cloudstuffs/gcp/inventorygcp.yml -l label_name_${self.labels.name} ansible/first-install.yml"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ${var.provisionninguser} --private-key ${var.private_key} -i ~/cloudstuffs/gcp/inventorygcp.yml -l label_name_${self.labels.name} ansible/first-install.yml"
     //command = "/bin/true"
   }
 

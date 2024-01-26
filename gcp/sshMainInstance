@@ -1,1 +1,1 @@
-ssh -i ~/.ssh/MainKeyPair.pem linux@$(ansible-inventory -i inventorygcp.yml --host label_name_maininstance | jq -r '.networkInterfaces|.[]|.accessConfigs|.[]|.natIP')
+ssh -i ~/.ssh/MainKeyPair.pem gcpuser@$(ansible-inventory -i inventorygcp.yml --host label_name_maininstance | jq -r '.networkInterfaces|.[]|.accessConfigs|.[]|.natIP')

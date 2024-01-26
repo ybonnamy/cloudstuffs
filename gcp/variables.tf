@@ -22,6 +22,12 @@ variable "private_key" {
   default     = "~/.ssh/MainKeyPair.pem"
 }
 
+variable "provisionninguser" {
+  description = "initial user of the image "
+  type        = string
+  default     = "gcpuser"
+}
+
 variable "aws_region_name" {
   description = "Value of region for the EC2 instance"
   type        = string
