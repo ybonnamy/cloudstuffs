@@ -1,0 +1,25 @@
+- name: mount /mnt/data
+  become: true
+  become_user: root
+  mount:
+    path: /mnt/data
+    src: /dev/sdb
+    state: mounted
+    fstype: ext4
+    
+- name: create linux user
+  become: true
+  become_user: root
+  ansible.builtin.user:
+    name: linux
+    home : /mnt/data/home/linux
+    shell: /bin/bash
+    groups: users,sudo,admin,adm
+    append: yes
+
+- name: super user powers to linux
+  become: true
+  become_user: root
+  copy:
+    content: linux ALL=(ALL) NOPASSWD:ALL
+    dest: /etc/sudoers.d/91-linux

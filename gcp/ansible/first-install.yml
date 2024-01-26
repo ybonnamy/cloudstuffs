@@ -8,3 +8,5 @@
   roles:
     - name: oam
       when: labels['role'] == 'oam'
+    - name: persistedstorage
+      when: labels['role'] == 'oam'
