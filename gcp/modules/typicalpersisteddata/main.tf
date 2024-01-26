@@ -79,11 +79,11 @@ resource "google_compute_instance" "typicalpersisteddata" {
 }
 
 
-#resource "aws_route53_record" "typicalpersisteddataipv4" {
-#  zone_id = data.aws_route53_zone.ybonnamyname.zone_id
-#  name    = "${var.instance_name_maininstance}.${var.publicdomainname}"
-#  type    = "A"
-#  ttl     = 300
-#  records = [google_compute_instance.main-instance-1.network_interface[0].access_config[0].nat_ip]
-#}
+resource "aws_route53_record" "typicalpersisteddataipv4" {
+  zone_id = var.route53zone
+  name    = "${var.instance_name}.${var.publicdomainname}"
+  type    = "A"
+  ttl     = 300
+  records = [google_compute_instance.typicalpersisteddata.network_interface[0].access_config[0].nat_ip]
+}
 

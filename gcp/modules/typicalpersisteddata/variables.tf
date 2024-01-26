@@ -87,3 +87,13 @@ variable "google_compute_attached_disk" {
   description = "google_compute_attached_disk"
   type        = string
 }
+
+variable "route53zone" {
+  description = "The route53zone for registering the instance"
+  type        = string
+}
+
+variable "publicdomainname" {
+  description = "The publicdomainname for registering the instance"
+  type        = string
+}
