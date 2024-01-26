@@ -1,13 +1,13 @@
-module "instance_1" {
+module "instance_main" {
   source              = "./modules/typicalpersisteddata/"
-  instance_name       = "secondaryinstance"
+  instance_name       = "maininstance"
   image_id            = data.google_compute_image.ubuntu.self_link
   disk_size           = 10
   disk_type           = "pd-standard"
   disk_mode           = "READ_WRITE"
   environment         = "dev"
   purpose             = "lab"
-  role                = "templated"
+  role                = "oam"
   zone                = var.availability_zone_name
   instance_type       = "e2-medium"
   can_ip_forward      = false
@@ -17,15 +17,15 @@ module "instance_1" {
   subnetwork          = google_compute_subnetwork.main.id
   provisionninguser   = "testanotheruser"
   private_key         = "~/.ssh/MainKeyPair.pem"
-  #gcloud compute disks create secondaryinstancepersisted --type=pd-standard --size=10GB --zone=europe-west9-c
-  google_compute_attached_disk = "secondaryinstancepersisted"
+  #gcloud compute disks create maininstancepersisted --type=pd-standard --size=10GB --zone=europe-west9-c
+  google_compute_attached_disk = "maininstancepersisted"
   route53zone                  = data.aws_route53_zone.ybonnamyname.zone_id
   publicdomainname             = var.publicdomainname
 }
 
 module "instance_2" {
   source              = "./modules/typicalpersisteddata/"
-  instance_name       = "thirdinstance"
+  instance_name       = "secondaryinstance"
   image_id            = data.google_compute_image.ubuntu.self_link
   disk_size           = 10
   disk_type           = "pd-standard"
@@ -42,8 +42,8 @@ module "instance_2" {
   subnetwork          = google_compute_subnetwork.main.id
   provisionninguser   = var.provisionninguser
   private_key         = "~/.ssh/MainKeyPair.pem"
-  #gcloud compute disks create thirdinstancepersisted --type=pd-standard --size=10GB --zone=europe-west9-c
-  google_compute_attached_disk = "thirdinstancepersisted"
+  #gcloud compute disks create secondaryinstancepersisted --type=pd-standard --size=10GB --zone=europe-west9-c
+  google_compute_attached_disk = "secondaryinstancepersisted"
   route53zone                  = data.aws_route53_zone.ybonnamyname.zone_id
   publicdomainname             = var.publicdomainname
 }

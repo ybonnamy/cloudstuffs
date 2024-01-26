@@ -1,10 +1,3 @@
-- name: Create a flag file called '/var/tmp/yBO.ansibleflag'.
-  become: true
-  become_user: root
-  copy:
-    content: hello world from yBO
-    dest: /var/tmp/yBO.ansibleflag
-
 - name: timezone
   become: true
   become_user: root
@@ -17,7 +10,6 @@
   ansible.builtin.apt:
     pkg:
      - dnsutils
-     - plocate
 
 - name: Update and upgrade apt packages
   become: true
