@@ -83,6 +83,11 @@ resource "google_compute_instance" "main-instance-1" {
 
 }
 
+resource "google_compute_attached_disk" "default" {
+  disk     = "maininstancepersisted"
+  instance = google_compute_instance.main-instance-1.id
+}
+
 resource "aws_route53_record" "maininstanceipv4" {
   zone_id = data.aws_route53_zone.ybonnamyname.zone_id
   name    = "${var.instance_name_maininstance}.${var.publicdomainname}"
