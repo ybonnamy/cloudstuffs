@@ -1,0 +1,20 @@
+---
+
+- name: This is a mad tester playbook
+  hosts: all
+  vars_files:
+    - tf_ansible_global_vars_file.yml
+
+  tasks:
+    - name: remove AAAA
+      local_action: 
+        module: amazon.aws.route53
+        state: absent
+        zone: "{{ zonename }}"
+        record: "{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}.{{ publicdomainname }}"
+        type: AAAA
+        ttl: 300
+        value: "{{ hostvars[inventory_hostname]['ansible_default_ipv6']['address'] }}"
+        wait: true
+        overwrite: true      
+      
