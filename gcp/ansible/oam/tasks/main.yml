@@ -1,0 +1,64 @@
+- name: Create a flag file called '/var/tmp/yBO.ansibleflag'.
+  become: true
+  become_user: root
+  copy:
+    content: hello world from yBO
+    dest: /var/tmp/yBO.ansibleflag
+
+- authorized_key:
+    user: linux
+    state: present
+    manage_dir: yes
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA8/GphrIRwif4o2ZxHSYWyHMBIqCleYKQDKtlNjFJEId+auJJVL4cmJRGMFAIOo2ush7Ab8U8LxkdeIZUfwjRqlee2aSAhHsfK+YqNXOx6x9PREZu93YmACFbpkFw1ACq1CRotwfnffXySnmTSd2wKisG33911RFoDdNBmAWiOEIbAsSwpozNxehHr7HW4nPXDReQO6WBF4FIuOlLPM2iqNXa6yuMFExol8xDIQ4PDMt6oH4FiddECDHOF+wc6XDhdwiM26SKMqWB3577pJ62vUv6ip1xX+7IARJMxRkBVvZwmS3IEB40SUFDj++DHhBeYO9zOVrK245MAXqvjsuSYQ== linux@xpc"
+
+- authorized_key:
+    user: linux
+    state: present
+    manage_dir: yes
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAq+4cfLij6BjRQvl0PKyUkSVa8c54/7+FSclRzwR1M4npKJ2a8XX6LAaZoIsrzoTmHfDLK2bZICcyHDx+ek8rDi22rO8Cz30FvI1KNztDABEsqu2otmF6oqiq3clrcOoDMgo2WZSibATzGCuNq1Xvt2Z/G6WEZ34zsdmbgnYMnZ3/M1iOwvbGNeTl7fPMCljreN5bUZPXOGLTndUjIcbel91aQ433v0RL7koZaQBJsG42xmutKkx6v0IuHimVLGmNLGsK57GLHjFP8dm4jv8YJuTAiy+0NIOS6iKFgpdror9+o2aaGzCi4zuvhnHf1M1h6ytdbPSU/YFSXKTr+dxbCw== mobaxterm@pcoam"
+
+- name: timezone
+  become: true
+  become_user: root
+  community.general.timezone:
+    name: Europe/Paris
+
+- name: Install some packages
+  become: true
+  become_user: root
+  ansible.builtin.apt:
+    pkg:
+     - dnsutils
+
+- name: Update and upgrade apt packages
+  become: true
+  become_user: root
+  apt:
+    upgrade: dist
+    update_cache: yes
+    autoremove: yes
+    autoclean: yes
+    cache_valid_time: 3600  # One day
+
+- name: Check if reboot required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reboot if required
+  become: true
+  become_user: root
+  reboot:
+  when: reboot_required_file.stat.exists == true
+
+- name: Add AAAA
+  local_action: 
+    module: amazon.aws.route53
+    state: present
+    zone: "{{ zonename }}"
+    record: "{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}.{{ publicdomainname }}"
+    type: AAAA
+    ttl: 300
+    value: "{{ hostvars[inventory_hostname]['ansible_default_ipv6']['address'] }}"
+    wait: true
+    overwrite: true
