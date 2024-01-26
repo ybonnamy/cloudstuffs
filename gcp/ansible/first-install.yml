@@ -7,6 +7,6 @@
 
   roles:
     - name: oam
-      when: labels['role'] == 'oam'
+      when: labels['role'] == 'oam' or labels['role'] == 'templated' 
     - name: persistedstorage
-      when: labels['role'] == 'oam'
+      when: labels['role'] == 'oam' or labels['role'] == 'templated' 

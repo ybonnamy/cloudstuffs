@@ -19,6 +19,10 @@ resource "google_compute_instance" "main-instance-1" {
     mode = "READ_WRITE"
   }
 
+  attached_disk {
+    source = "maininstancepersisted"
+  }
+
   labels = {
     name          = var.instance_name_maininstance
     environnement = "dev"
@@ -80,11 +84,6 @@ resource "google_compute_instance" "main-instance-1" {
     //command = "/bin/true"
   }
 
-}
-
-resource "google_compute_attached_disk" "default" {
-  disk     = "maininstancepersisted"
-  instance = google_compute_instance.main-instance-1.id
 }
 
 resource "aws_route53_record" "maininstanceipv4" {
