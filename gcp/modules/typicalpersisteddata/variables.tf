@@ -16,6 +16,7 @@ variable "disk_size" {
 variable "disk_type" {
   description = "The type of the disk to attach to the instance"
   type        = string
+  default     = "pd-standard"
 }
 
 variable "disk_mode" {
@@ -46,21 +47,25 @@ variable "zone" {
 variable "instance_type" {
   description = "The type of instance to create"
   type        = string
+  default     = "e2-medium"
 }
 
 variable "can_ip_forward" {
   description = "Defines whether the instance can forward IP"
   type        = bool
+  default     = false
 }
 
 variable "deletion_protection" {
   description = "Whether the instance should be protected from being deleted"
   type        = bool
+  default     = false
 }
 
 variable "enable_display" {
   description = "Whether to enable display for the instance"
   type        = bool
+  default     = true
 }
 
 variable "ssh_keys" {
