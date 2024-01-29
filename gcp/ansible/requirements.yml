@@ -1,2 +1,8 @@
+---
+
+roles:
+  - name: geerlingguy.apache
+  - name: geerlingguy.certbot
+
 collections:
   - name: amazon.aws

@@ -5,11 +5,11 @@
     fstype: ext4
     dev: /dev/sdb
     
-- name: mount /mnt/data
+- name: mount {{ mnt_data_path }}
   become: true
   become_user: root
   mount:
-    path: /mnt/data
+    path: "{{ mnt_data_path }}"
     src: /dev/sdb
     state: mounted
     fstype: ext4
@@ -19,7 +19,7 @@
   become_user: root
   ansible.builtin.user:
     name: linux
-    home : /mnt/data/home/linux
+    home : "{{ mnt_data_path }}/home/linux"
     shell: /bin/bash
     groups: users,sudo,admin,adm
     append: yes

@@ -1,0 +1,4 @@
+mnt_data_path: "/mnt/data/"
+webserver_repo: "https://github.com/ybonnamy/statYc.git"
+webserver_host: "{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}.{{ publicdomainname }}"
+webserver_certbot_email: "yann_bonnamy@yahoo.fr"

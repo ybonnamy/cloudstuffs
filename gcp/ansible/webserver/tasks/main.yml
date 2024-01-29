@@ -1,0 +1,61 @@
+---
+- name: Ensure the documentroot directory structure exists
+  file:
+    path: "{{ mnt_data_path }}/var/www/html"
+    state: directory
+    mode: '0755'
+
+- name: Clone Git repository
+  git:
+    repo: "{{ webserver_repo }}"  # Replace with your Git repository URL
+    dest: "{{ mnt_data_path }}/var/www/html"
+    version: main  # Replace with the branch or tag you want to clone
+
+- name: Ensure the letsencrypt directory structure exists
+  file:
+    path: "{{ mnt_data_path }}/etc/letsencrypt"
+    state: directory
+    mode: '0755'
+
+- name: bind mount {{ mnt_data_path }} /etc/letsencrypt
+  become: true
+  become_user: root
+  mount:
+    path: /etc/letsencrypt
+    src: "{{ mnt_data_path }}/etc/letsencrypt"
+    fstype: none
+    opts: bind
+    state: mounted
+
+- name: Configure Apache
+  include_role:
+    name: geerlingguy.apache
+  vars:
+    apache_vhosts_ssl:
+      - servername: "{{ webserver_host }}"
+        documentroot: "{{ mnt_data_path }}/var/www/html"
+        certificate_file: "{{ mnt_data_path }}/etc/letsencrypt/live/{{ webserver_host }}/fullchain.pem"
+        certificate_key_file: "{{ mnt_data_path }}/etc/letsencrypt/live/{{ webserver_host }}/privkey.pem"
+    apache_vhosts:
+      - servername: "{{ webserver_host }}"
+        documentroot: "{{ mnt_data_path }}/var/www/html"
+
+- name: Manage Let's Encrypt Certificates
+  include_role:
+    name: geerlingguy.certbot
+  vars:
+    certbot_create_if_missing: true
+    certbot_certs:
+      - email: "{{ webserver_certbot_email }}"
+        domains:
+          - "{{ webserver_host }}"
+    certbot_auto_renew: true
+    certbot_auto_renew_user: root
+    certbot_auto_renew_hour: "0"
+    certbot_auto_renew_minute: "0"
+    certbot_auto_renew_options: "--quiet --no-self-upgrade"
+    certbot_create_standalone_stop_services: 
+      - apache2
+
+
+

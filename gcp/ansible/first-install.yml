@@ -4,9 +4,12 @@
   hosts: all
   vars_files:
     - tf_ansible_global_vars_file.yml
+    - only_ansible_global_vars_file.yml
 
   roles:
     - name: oam
-      when: labels['role'] == 'oam' or labels['role'] == 'templated' 
     - name: persistedstorage
-      when: labels['role'] == 'oam' or labels['role'] == 'templated' 
+    - name: webserver
+      become: true
+      become_user: root
+      when: labels['role'] == 'webserver'
