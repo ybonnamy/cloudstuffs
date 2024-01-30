@@ -4,12 +4,22 @@
   community.general.timezone:
     name: Europe/Paris
 
-- name: Install some packages
+- name: Install some modern packages
   become: true
   become_user: root
+  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int >= 22
   ansible.builtin.apt:
     pkg:
      - dnsutils
+
+- name: Install some packages
+  become: true
+  become_user: root
+  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int < 22
+  ansible.builtin.apt:
+    pkg:
+     - git
+     - cron
 
 - name: Update and upgrade apt packages
   become: true

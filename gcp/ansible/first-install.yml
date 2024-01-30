@@ -9,7 +9,13 @@
   roles:
     - name: oam
     - name: persistedstorage
+
     - name: webserver
       become: true
       become_user: root
-      when: labels['role'] == 'webserver'
+      when: labels['role'] == 'webserver' or labels['role'] == 'ppfsa'
+
+    - name: ppfsa
+      become: true
+      become_user: root
+      when: labels['role'] == 'ppfsa'
