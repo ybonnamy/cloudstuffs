@@ -39,7 +39,7 @@
     state: present
     name: proxy
     
-- name: Configure Apache reverse proxy
+- name: Configure Apache reverse proxy for kibana
   include_role:
     name: geerlingguy.apache
   vars:
@@ -55,3 +55,16 @@
               ProxyPass  "http://localhost:5601/"
               ProxyPassReverse  "http://localhost:5601/"
             </Location>        
+            
+- name: create virtualhost conf for StormUI
+  vars:
+    webserver_custom_port: 8444
+    proxypass_custom: "https://localhost:8080"
+  template: src=virtualhost.proxypass.conf dest=/etc/apache2/sites-available/{{ webserver_host }}.{{ webserver_custom_port }}.conf
+  notify: restart apache2
+ 
+- name: a2ensite
+  command: a2ensite {{ webserver_host }}
+  args:
+    creates: /etc/apache2/sites-enabled/{{ webserver_host }}.conf
+  notify: restart apache2
