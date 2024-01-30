@@ -1,6 +1,4 @@
 - name: create ppfsa user
-  become: true
-  become_user: root
   ansible.builtin.user:
     name: ppfsa
     home : "{{ mnt_data_path }}/home/ppfsa"
@@ -9,15 +7,11 @@
     append: yes
 
 - name: super user powers to ppfsa
-  become: true
-  become_user: root
   copy:
     content: ppfsa ALL=(ALL) NOPASSWD:ALL
     dest: /etc/sudoers.d/91-ppfsa
     
 - name: Set authorized key for ppfsa@xpc
-  become: true
-  become_user: root
   ansible.posix.authorized_key:
     user: ppfsa
     state: present
@@ -26,8 +20,6 @@
 
 
 - name: Set authorized key for mobaxterm@pcoam
-  become: true
-  become_user: root
   ansible.posix.authorized_key:
     user: ppfsa
     state: present
@@ -36,10 +28,30 @@
 
 
 - name: Set authorized key for MainKeyPair
-  become: true
-  become_user: root
   ansible.posix.authorized_key:
     user: ppfsa
     state: present
     manage_dir: yes
     key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkQ/4I65lRavhUi5xsaJAgqAMEdw+DfRiPc/S9Gzddc MainKeyPair"
+    
+- name: enable proxy module
+  apache2_module:
+    state: present
+    name: proxy
+    
+- name: Configure Apache reverse proxy
+  include_role:
+    name: geerlingguy.apache
+  vars:
+    apache_listen_port_ssl: 443
+    apache_remove_default_vhost: true
+    apache_create_vhosts: true
+    apache_vhosts_ssl:
+      - servername: "{{ webserver_host }}"
+        certificate_file: "{{ mnt_data_path }}/etc/letsencrypt/live/{{ webserver_host }}/fullchain.pem"
+        certificate_key_file: "{{ mnt_data_path }}/etc/letsencrypt/live/{{ webserver_host }}/privkey.pem"
+        extra_parameters: |
+            <Location />
+              ProxyPass  "http://localhost:5601/"
+              ProxyPassReverse  "http://localhost:5601/"
+            </Location>        
