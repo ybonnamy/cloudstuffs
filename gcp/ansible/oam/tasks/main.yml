@@ -20,6 +20,7 @@
     pkg:
      - git
      - cron
+     - netcat
 
 - name: Update and upgrade apt packages
   become: true
