@@ -12,36 +12,6 @@ resource "google_compute_subnetwork" "web" {
   }
 }
 
-resource "google_compute_firewall" "allow-web-ipv4" {
-  name    = "allow-web-ipv4"
-  network = google_compute_network.main.id
-
-  allow {
-    protocol = "icmp"
-  }
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "22"]
-  }
-  source_ranges = ["0.0.0.0/0"]
-}
-
-resource "google_compute_firewall" "allow-web-ipv6" {
-  name    = "allow-web-ipv6"
-  network = google_compute_network.main.id
-
-  allow {
-    protocol = "58"
-  }
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "22"]
-  }
-  source_ranges = ["::/0"]
-}
-
 module "www" {
   source            = "./modules/typicalpersisteddata/"
   instance_name     = "www"

@@ -12,37 +12,6 @@ resource "google_compute_subnetwork" "ppf" {
   }
 }
 
-resource "google_compute_firewall" "allow-ppf-ipv4" {
-  name    = "allow-ppf-ipv4"
-  network = google_compute_network.main.id
-
-  allow {
-    protocol = "icmp"
-  }
-
-  allow {
-    protocol = "tcp"
-    ports    = ["8443", "443", "22"]
-  }
-  source_ranges = ["0.0.0.0/0"]
-}
-
-resource "google_compute_firewall" "allow-ppf-ipv6" {
-  name    = "allow-ppf-ipv6"
-  network = google_compute_network.main.id
-
-  allow {
-    protocol = "58"
-  }
-
-  allow {
-    protocol = "tcp"
-    ports    = ["8443", "443", "22"]
-  }
-  source_ranges = ["::/0"]
-}
-
-
 data "google_compute_image" "u20" {
   family  = "ubuntu-minimal-2004-lts"
   project = "ubuntu-os-cloud-devel"
