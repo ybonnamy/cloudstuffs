@@ -58,13 +58,13 @@
             
 - name: create virtualhost conf for StormUI
   vars:
-    webserver_custom_port: 8444
+    webserver_custom_port: 8443
     proxypass_custom: "https://localhost:8080"
   template: src=virtualhost.proxypass.conf dest=/etc/apache2/sites-available/{{ webserver_host }}.{{ webserver_custom_port }}.conf
   notify: restart apache2
  
 - name: a2ensite
-  command: a2ensite {{ webserver_host }}
-  args:
-    creates: /etc/apache2/sites-enabled/{{ webserver_host }}.conf
+  vars:
+    webserver_custom_port: 8443
+  command: a2ensite {{ webserver_host }}.{{ webserver_custom_port }}
   notify: restart apache2
