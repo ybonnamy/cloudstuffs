@@ -22,6 +22,7 @@ module "ppfsa" {
   instance_name     = "ppfsa"
   image_id          = data.google_compute_image.u20.self_link
   disk_size         = 10
+  instance_type     = "e2-highmem-4"
   disk_mode         = "READ_WRITE"
   environment       = "dev"
   purpose           = "lmc"

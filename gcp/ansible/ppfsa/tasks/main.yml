@@ -38,6 +38,11 @@
   apache2_module:
     state: present
     name: proxy
+
+- name: enable proxy module
+  apache2_module:
+    state: present
+    name: proxy_http
     
 - name: Configure Apache reverse proxy for kibana
   include_role:
@@ -59,7 +64,7 @@
 - name: create virtualhost conf for StormUI
   vars:
     webserver_custom_port: 8443
-    proxypass_custom: "https://localhost:8080"
+    proxypass_custom: "http://localhost:8080"
   template: src=virtualhost.proxypass.conf dest=/etc/apache2/sites-available/{{ webserver_host }}.{{ webserver_custom_port }}.conf
   notify: restart apache2
  
@@ -68,3 +73,52 @@
     webserver_custom_port: 8443
   command: a2ensite {{ webserver_host }}.{{ webserver_custom_port }}
   notify: restart apache2
+  
+- name: Install some packages for punchplatform
+  ansible.builtin.apt:
+    pkg:
+     - unzip
+     - jq
+     - curl 
+     - openjdk-8-jdk
+     - python3 
+     - python3-pip
+     - python-is-python3
+     - python3-demjson
+     - virtualenv
+     - socat
+     - acl
+     - mlocate
+     - libssl-dev
+     - ansible
+     
+- name: bind mount /mnt/ppfsa as done in initial lab
+  mount:
+    path: /mnt/ppfsa
+    src: "{{ mnt_data_path }}/home/ppfsa"
+    fstype: none
+    opts: bind
+    state: mounted
+
+- name: Install necessary locales
+  apt:
+    name: locales
+    state: latest
+
+- name: Generate locale
+  command: locale-gen en_US.UTF-8
+
+- name: Update locale
+  lineinfile:
+    path: /etc/default/locale
+    line: LC_ALL="en_US.UTF-8"
+    create: True
+
+- name: Update locale for LANG
+  lineinfile:
+    path: /etc/default/locale
+    line: LANG="en_US.UTF-8"
+    create: True
+
+- name: start the ppfsa 
+  shell: sudo su - ppfsa -c "cd ~/punch-standalone-6.4.4-linux ; source activate.sh ; punchplatform-standalone.sh --start"
