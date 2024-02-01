@@ -4,6 +4,16 @@
   community.general.timezone:
     name: Europe/Paris
 
+- name: Update and upgrade apt packages
+  become: true
+  become_user: root
+  apt:
+    upgrade: dist
+    update_cache: yes
+    autoremove: yes
+    autoclean: yes
+    cache_valid_time: 3600  # One day
+
 - name: Install some modern packages
   become: true
   become_user: root
@@ -22,16 +32,6 @@
      - cron
      - netcat
      - vim
-
-- name: Update and upgrade apt packages
-  become: true
-  become_user: root
-  apt:
-    upgrade: dist
-    update_cache: yes
-    autoremove: yes
-    autoclean: yes
-    cache_valid_time: 3600  # One day
 
 - name: Check if reboot required
   stat:
