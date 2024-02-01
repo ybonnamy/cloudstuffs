@@ -66,14 +66,31 @@
     webserver_custom_port: 8443
     proxypass_custom: "http://localhost:8080"
   template: src=virtualhost.proxypass.conf dest=/etc/apache2/sites-available/{{ webserver_host }}.{{ webserver_custom_port }}.conf
-  notify: restart apache2
  
-- name: a2ensite
+- name: a2ensite StormUI
   vars:
     webserver_custom_port: 8443
   command: a2ensite {{ webserver_host }}.{{ webserver_custom_port }}
   notify: restart apache2
-  
+
+- name: create conf for SSLRequire
+  vars:
+    webserver_custom_port: 8443
+    proxypass_custom: "http://localhost:8080"
+  template: src=SSLRequire.conf dest=/etc/apache2/conf-available/SSLRequire.conf
+
+- name: copy trusted CAs
+  copy:
+    src: trusted.pem
+    dest: "/usr/local/share/ca-certificates/customtrusted.crt"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: a2conf SSLRequire
+  command: a2enconf SSLRequire
+  notify: restart apache2
+ 
 - name: Install some packages for punchplatform
   ansible.builtin.apt:
     pkg:
