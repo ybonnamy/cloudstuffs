@@ -63,20 +63,17 @@
             
 - name: create virtualhost conf for StormUI
   vars:
-    webserver_custom_port: 8443
+    webserver_custom_port: 80
     proxypass_custom: "http://localhost:8080"
   template: src=virtualhost.proxypass.conf dest=/etc/apache2/sites-available/{{ webserver_host }}.{{ webserver_custom_port }}.conf
  
 - name: a2ensite StormUI
   vars:
-    webserver_custom_port: 8443
+    webserver_custom_port: 80
   command: a2ensite {{ webserver_host }}.{{ webserver_custom_port }}
   notify: restart apache2
 
 - name: create conf for SSLRequire
-  vars:
-    webserver_custom_port: 8443
-    proxypass_custom: "http://localhost:8080"
   template: src=SSLRequire.conf dest=/etc/apache2/conf-available/SSLRequire.conf
 
 - name: copy trusted CAs

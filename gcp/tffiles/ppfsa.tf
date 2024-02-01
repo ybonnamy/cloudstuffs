@@ -14,7 +14,7 @@ resource "google_compute_firewall" "allow-lmc-ipv4" {
 
   allow {
     protocol = "tcp"
-    ports    = ["8443","443","22","9051","10098","10099"]
+    ports    = ["8443","443","80","22","9051","10098","10099"]
   }
   source_ranges = ["0.0.0.0/0"]
 }
@@ -29,7 +29,7 @@ resource "google_compute_firewall" "allow-lmc-ipv6" {
 
   allow {
     protocol = "tcp"
-    ports    = ["8443", "443", "22"]
+    ports    = ["8443","80","443","22"]
   }
   source_ranges = ["::/0"]
 }
