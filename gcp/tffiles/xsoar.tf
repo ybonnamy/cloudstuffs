@@ -123,6 +123,7 @@ module "demten01" {
   instance_name     = "demten01"
   image_id          = data.google_compute_image.u20lts.self_link
   disk_size         = 20
+  instance_type     = "e2-standard-4"
   disk_mode         = "READ_WRITE"
   environment       = "dev"
   purpose           = "xsoar"
@@ -143,6 +144,7 @@ module "demten02" {
   instance_name     = "demten02"
   image_id          = data.google_compute_image.u20lts.self_link
   disk_size         = 20
+  instance_type     = "e2-standard-4"
   disk_mode         = "READ_WRITE"
   environment       = "dev"
   purpose           = "xsoar"
