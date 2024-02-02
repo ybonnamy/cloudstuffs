@@ -19,3 +19,9 @@
       become: true
       become_user: root
       when: labels['role'] == 'ppfsa'
+
+    - name: xsoar
+      become: true
+      become_user: root
+      tags: xsoar
+      when: labels['purpose'] == 'xsoar'
