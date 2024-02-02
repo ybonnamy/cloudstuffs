@@ -14,7 +14,7 @@ resource "google_compute_firewall" "allow-web-ipv4" {
 
   allow {
     protocol = "tcp"
-    ports    = ["443", "22"]
+    ports    = ["80","443", "22"]
   }
   source_ranges = ["0.0.0.0/0"]
 }
@@ -29,7 +29,7 @@ resource "google_compute_firewall" "allow-web-ipv6" {
 
   allow {
     protocol = "tcp"
-    ports    = ["443", "22"]
+    ports    = ["80","443", "22"]
   }
   source_ranges = ["::/0"]
 }
