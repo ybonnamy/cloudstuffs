@@ -55,3 +55,19 @@
     value: "{{ hostvars[inventory_hostname]['ansible_default_ipv6']['address'] }}"
     wait: true
     overwrite: true
+
+- name: Remove old SSH key
+  local_action: 
+    module: command
+    args:
+      cmd: ssh-keygen -R {{ inventory_hostname }}
+  delegate_to: localhost
+
+- name: add new SSH key
+  local_action: 
+    module: command
+    args:
+      cmd:   ssh -o StrictHostKeyChecking=no {{ provisionninguser }}@{{ inventory_hostname }} ls 
+  delegate_to: localhost
+  ignore_errors: yes
+
