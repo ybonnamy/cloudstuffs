@@ -3,6 +3,7 @@
 roles:
   - name: geerlingguy.apache
   - name: geerlingguy.certbot
+  - name: geerlingguy.swap
 
 collections:
   - name: amazon.aws

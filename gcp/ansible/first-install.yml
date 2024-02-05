@@ -9,7 +9,11 @@
   roles:
     - name: oam
       tags: oam
+
     - name: persistedstorage
+      become: true
+      become_user: root
+      tags: persistedstorage
 
     - name: webserver
       become: true

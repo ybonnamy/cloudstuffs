@@ -1,13 +1,9 @@
 - name: Create a ext4 filesystem on /dev/sdb
-  become: true
-  become_user: root
   community.general.filesystem:
     fstype: ext4
     dev: /dev/sdb
     
 - name: mount {{ mnt_data_path }}
-  become: true
-  become_user: root
   mount:
     path: "{{ mnt_data_path }}"
     src: /dev/sdb
@@ -15,8 +11,6 @@
     fstype: ext4
     
 - name: create linux user
-  become: true
-  become_user: root
   ansible.builtin.user:
     name: linux
     home : "{{ mnt_data_path }}/home/linux"
@@ -25,15 +19,11 @@
     append: yes
 
 - name: super user powers to linux
-  become: true
-  become_user: root
   copy:
     content: linux ALL=(ALL) NOPASSWD:ALL
     dest: /etc/sudoers.d/91-linux
     
 - name: Set authorized key for linux@xpc
-  become: true
-  become_user: root
   ansible.posix.authorized_key:
     user: linux
     state: present
@@ -42,8 +32,6 @@
 
 
 - name: Set authorized key for mobaxterm@pcoam
-  become: true
-  become_user: root
   ansible.posix.authorized_key:
     user: linux
     state: present
@@ -52,10 +40,17 @@
 
 
 - name: Set authorized key for MainKeyPair
-  become: true
-  become_user: root
   ansible.posix.authorized_key:
     user: linux
     state: present
     manage_dir: yes
     key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkQ/4I65lRavhUi5xsaJAgqAMEdw+DfRiPc/S9Gzddc MainKeyPair"
+    
+- name: Add some swap
+  include_role:
+    name: geerlingguy.swap
+  vars:
+    swap_file_size_mb: 2048
+    swap_file_path: "{{ mnt_data_path }}/swapfile"
+    
+    
