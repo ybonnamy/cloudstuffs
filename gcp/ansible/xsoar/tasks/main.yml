@@ -136,4 +136,4 @@
     state: link
 
 - name: install the xsoar 
-  shell: /mnt/data/home/demisto/install.6.10.exp
+  shell: /mnt/data/home/demisto/install.6.12.exp
