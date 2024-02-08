@@ -93,15 +93,15 @@ resource "google_compute_subnetwork" "xsoar" {
   }
 }
 
-data "google_compute_image" "u20lts" {
-  family  = "ubuntu-2004-lts"
+data "google_compute_image" "u22lts" {
+  family  = "ubuntu-2204-lts"
   project = "ubuntu-os-cloud-devel"
 }
 
 module "demmst01" {
   source            = "./modules/typicalpersisteddata/"
   instance_name     = "demmst01"
-  image_id          = data.google_compute_image.u20lts.self_link
+  image_id          = data.google_compute_image.u22lts.self_link
   disk_size         = 20
   disk_mode         = "READ_WRITE"
   environment       = "dev"
@@ -121,7 +121,7 @@ module "demmst01" {
 module "demten01" {
   source            = "./modules/typicalpersisteddata/"
   instance_name     = "demten01"
-  image_id          = data.google_compute_image.u20lts.self_link
+  image_id          = data.google_compute_image.u22lts.self_link
   disk_size         = 20
   instance_type     = "e2-standard-4"
   disk_mode         = "READ_WRITE"
@@ -142,7 +142,7 @@ module "demten01" {
 module "demten02" {
   source            = "./modules/typicalpersisteddata/"
   instance_name     = "demten02"
-  image_id          = data.google_compute_image.u20lts.self_link
+  image_id          = data.google_compute_image.u22lts.self_link
   disk_size         = 20
   instance_type     = "e2-standard-4"
   disk_mode         = "READ_WRITE"
@@ -163,7 +163,7 @@ module "demten02" {
 module "demeng01" {
   source            = "./modules/typicalpersisteddata/"
   instance_name     = "demeng01"
-  image_id          = data.google_compute_image.u20lts.self_link
+  image_id          = data.google_compute_image.u22lts.self_link
   disk_size         = 20
   disk_mode         = "READ_WRITE"
   environment       = "dev"
