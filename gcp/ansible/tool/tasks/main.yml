@@ -1,0 +1,6 @@
+- name: Install tooling on Fedora
+  when: ansible_distribution == "Fedora"
+  dnf:
+    name:
+      - iperf
+    state: present

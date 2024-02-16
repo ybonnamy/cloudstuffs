@@ -18,11 +18,13 @@
     - name: webserver
       become: true
       become_user: root
+      tags: webserver
       when: labels['role'] == 'webserver' or labels['role'] == 'ppfsa'
 
     - name: ppfsa
       become: true
       become_user: root
+      tags: ppfsa
       when: labels['role'] == 'ppfsa'
 
     - name: xsoar
@@ -30,3 +32,9 @@
       become_user: root
       tags: xsoar
       when: labels['purpose'] == 'xsoar'
+
+    - name: tool
+      become: true
+      become_user: root
+      tags: tool
+      when: labels['role'] == 'tool'

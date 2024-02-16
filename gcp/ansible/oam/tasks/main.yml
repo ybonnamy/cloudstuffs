@@ -7,12 +7,22 @@
 - name: Update and upgrade apt packages
   become: true
   become_user: root
+  when: ansible_os_family == "Debian" 
   apt:
     upgrade: dist
     update_cache: yes
     autoremove: yes
     autoclean: yes
     cache_valid_time: 3600  # One day
+
+- name: Update and upgrade packages on Fedora
+  become: true
+  become_user: root
+  when: ansible_distribution == "Fedora"
+  dnf:
+    name: '*'
+    state: latest
+    update_cache: yes
 
 - name: Install some modern packages
   become: true
@@ -32,6 +42,18 @@
      - cron
      - netcat
      - vim
+
+
+- name: Install some packages on Fedora
+  become: true
+  become_user: root
+  when: ansible_distribution == "Fedora"
+  dnf:
+    name:
+      - git
+      - nc
+      - vim
+    state: present
 
 - name: Check if reboot required
   stat:
@@ -67,7 +89,7 @@
   local_action: 
     module: command
     args:
-      cmd:   ssh -o StrictHostKeyChecking=no {{ provisionninguser }}@{{ inventory_hostname }} ls 
+      cmd:   ssh -o StrictHostKeyChecking=no -o BatchMode=yes {{ provisionninguser }}@{{ inventory_hostname }} ls 
   delegate_to: localhost
   ignore_errors: yes
 
