@@ -38,25 +38,25 @@
       update_cache: yes
   when: longtaskallowed is defined and longtaskallowed == true
   
-- name: Install some packages on Debian >=22
+- name: Install some packages on Ubuntu >=22
   become: true
   become_user: root
-  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int >= 22
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int >= 22
   ansible.builtin.apt:
     pkg:
      - dnsutils
 
-- name: Install some packages on Debian <22
+- name: Install some packages on Ubuntu <22
   become: true
   become_user: root
-  when: ansible_os_family == "Debian" and ansible_distribution_major_version|int < 22
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int < 22
   ansible.builtin.apt:
     pkg:
      - git
      - cron
      - netcat
      - vim
-
+     - dnsutils
 
 - name: Install some packages on Fedora
   become: true
@@ -67,6 +67,7 @@
       - git
       - nc
       - vim
+      - bind-utils
     state: present
 
 - name: Add AAAA

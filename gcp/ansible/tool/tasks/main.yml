@@ -3,4 +3,7 @@
   dnf:
     name:
       - iperf
+      - traceroute
+      - nmap
+      - whois
     state: present
