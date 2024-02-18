@@ -62,8 +62,8 @@ module "www" {
   subnetwork        = google_compute_subnetwork.web.id
   provisionninguser = var.provisionninguser
   private_key       = "~/.ssh/MainKeyPair.pem"
-  #gcloud compute disks create secondaryinstancepersisted --type=pd-standard --size=10GB --zone=europe-west9-c
-  google_compute_attached_disk = "secondaryinstancepersisted"
+  #gcloud compute disks create wwwpersisted --type=pd-standard --size=10GB --zone=europe-west9-c
+  google_compute_attached_disk = "wwwpersisted"
   route53zone                  = data.aws_route53_zone.ybonnamyname.zone_id
   publicdomainname             = var.publicdomainname
 }
