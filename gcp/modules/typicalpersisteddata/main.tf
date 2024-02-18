@@ -72,7 +72,7 @@ resource "google_compute_instance" "typicalpersisteddata" {
   
 
   provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ${var.provisionninguser} --private-key ${var.private_key} -i ~/cloudstuffs/gcp/inventorygcp.yml -l label_name_${self.labels.name} ansible/first-install.yml"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ${var.provisionninguser} --private-key ${var.private_key} -l label_name_${self.labels.name} ansible/first-install.yml"
   }
 
 }
