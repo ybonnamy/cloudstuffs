@@ -38,6 +38,12 @@
         documentroot: "{{ mnt_data_path }}/var/www/html"
         certificate_file: "{{ mnt_data_path }}/etc/letsencrypt/live/{{ webserver_host }}/fullchain.pem"
         certificate_key_file: "{{ mnt_data_path }}/etc/letsencrypt/live/{{ webserver_host }}/privkey.pem"
+    apache_vhosts:
+      - servername: "{{ webserver_host }}"
+        extra_parameters: |
+          RewriteEngine On
+          RewriteCond %{HTTPS} off
+          RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
 - name: Manage Let's Encrypt Certificates
   include_role:
