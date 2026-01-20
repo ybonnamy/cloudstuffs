@@ -4,6 +4,8 @@
     name:
       - iperf
       - traceroute
+      - nmap-ncat
       - nmap
       - whois
+      - bind-utils
     state: present
