@@ -16,6 +16,16 @@ resource "google_compute_firewall" "allow-tool-ipv4" {
     protocol = "tcp"
     ports    = ["22"]
   }
+  source_ranges = ["0.0.0.0/0","82.64.197.103","80.70.37.104/30"]
+}
+
+resource "google_compute_firewall" "allow_tool_wireguard" {
+  name    = "allow-tool-wireguard"
+  network = google_compute_network.tool.id
+  allow {
+    protocol = "udp"
+    ports    = ["51820"]
+  }
   source_ranges = ["0.0.0.0/0"]
 }
 
@@ -31,7 +41,7 @@ resource "google_compute_firewall" "allow-tool-ipv6" {
     protocol = "tcp"
     ports    = ["22"]
   }
-  source_ranges = ["::/0"]
+  source_ranges = ["::/0","2a01:e0a:102c:8810::/64"]
 }
 
 resource "google_compute_firewall" "allow-iperf-ipv4" {
@@ -63,7 +73,7 @@ resource "google_compute_firewall" "allow-iperf-ipv6" {
     protocol = "udp"
     ports    = ["5001"]
   }
-  source_ranges = ["2a01:e0a:218:8810::/64"]
+  source_ranges = ["2a01:e0a:102c:8810::/64"]
 }
 
 
@@ -83,8 +93,9 @@ resource "google_compute_subnetwork" "tool" {
 
 
 data "google_compute_image" "latestfedora" {
-  family  = "fedora-cloud-38"
+  family  = "fedora-cloud-39"
   project = "fedora-cloud"
+  #gcloud compute images list --project=fedora-cloud --no-standard-images
 }
 
 
