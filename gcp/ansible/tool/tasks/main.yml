@@ -1,16 +1,41 @@
-- name: Install tooling on Fedora
+- name: Setup Fedora specific tools and repositories
   when: ansible_distribution == "Fedora"
-  dnf:
-    name:
-      - iperf
-      - traceroute
-      - nmap-ncat
-      - nmap
-      - whois
-      - bind-utils
-      - wireguard-tools
-      - iptables
-    state: present
+  become: true
+  block:
+    - name: Add Google Cloud SDK repository
+      ansible.builtin.yum_repository:
+        name: google-cloud-cli
+        description: Google Cloud CLI
+        baseurl: https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
+        enabled: yes
+        gpgcheck: yes
+        repo_gpgcheck: no
+        gpgkey: https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: Add Kubernetes repository
+      ansible.builtin.yum_repository:
+        name: kubernetes
+        description: Kubernetes
+        baseurl: https://pkgs.k8s.io/core:/stable:/v1.31/rpm/
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key
+
+    - name: Install tools and CLI
+      ansible.builtin.dnf:
+        name:
+          - iperf
+          - traceroute
+          - nmap-ncat
+          - nmap
+          - whois
+          - bind-utils
+          - wireguard-tools
+          - iptables
+          - ansible
+          - google-cloud-cli
+          - kubectl
+        state: present
 
 - name: Activate IP Forwarding
   become: true
