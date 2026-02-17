@@ -1,13 +1,13 @@
 variable "region_name" {
   description = "Value of region for the EC2 instance"
   type        = string
-  default     = "europe-west4"
+  default     = "europe-west1"
 }
 
 variable "availability_zone_name" {
   description = "Value of availability_zone for the EC2 instance"
   type        = string
-  default     = "europe-west4-c"
+  default     = "europe-west1-c"
 }
 
 variable "main_key_name" {
