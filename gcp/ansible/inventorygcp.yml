@@ -1,5 +1,3 @@
-
-
 plugin: gcp_compute
 auth_kind: application
 projects:
@@ -9,5 +7,18 @@ keyed_groups:
     prefix: label
   - key: zone
     prefix: zone
-
-  
+  - prefix: ""
+    key: labels['ansible-group']                                                                  
+    separator: ""                                
+  - prefix: k3s
+    key: labels['k3s-role']
+    separator: "_"                  
+  - prefix: xdr
+    key: labels['is-xdr']
+    separator: "_"                  
+      
+groups:
+  xdr: "labels['is-xdr'] == 'true'"
+  server: "labels['k3s-role'] == 'manager'"
+  agent: "labels['k3s-role'] == 'worker'"
+  k3s_cluster: "labels.get('k3s-role') in ['manager', 'worker']"

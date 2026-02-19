@@ -5,4 +5,5 @@ gcloud auth application-default login
 gcloud iam service-accounts keys create ~/key.json --iam-account=$SA@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com
 gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID --member serviceAccount:$SA@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com --role roles/editor
 export GOOGLE_APPLICATION_CREDENTIALS=~/key.json
+export ANSIBLE_PRIVATE_KEY_FILE="~/.ssh/MainKeyPair.pem"
 

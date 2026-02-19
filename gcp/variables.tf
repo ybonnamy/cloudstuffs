@@ -22,6 +22,12 @@ variable "private_key" {
   default     = "~/.ssh/MainKeyPair.pem"
 }
 
+variable "ssh_public_key" {
+  description = "Path to SSH public key"
+  type        = string
+  default = "~/.ssh/MainKeyPair.pub"
+}
+
 variable "provisionninguser" {
   description = "initial user of the image "
   type        = string
