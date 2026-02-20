@@ -532,6 +532,9 @@ resource "google_compute_forwarding_rule" "kube_lb_6443" {
   lifecycle {
     replace_triggered_by = [google_compute_region_target_tcp_proxy.kube_manager_api]
   }
+  depends_on = [
+    google_compute_subnetwork.klustery-subnetwork-proxyonly
+  ]
 }
 
 resource "google_compute_forwarding_rule" "worker_lb_http" {
@@ -585,3 +588,74 @@ resource "google_compute_router_nat" "nat" {
       nat_ip_allocate_option = "AUTO_ONLY" 
 }
 
+
+############################################
+# Google Compute Engine Persistent Disk CSI Driver
+############################################
+
+resource "google_project_iam_custom_role" "csi_driver_role" {
+      role_id     = "gcp_compute_persistent_disk_csi_driver_custom_role_for_klustery"
+      title       = "Google Compute Engine Persistent Disk CSI Driver Custom Role"
+      permissions = [
+        "compute.instances.get",
+        "compute.instances.attachDisk",
+        "compute.instances.detachDisk",
+        "compute.disks.get"
+      ]
+    }
+	
+resource "google_service_account" "csi_driver_sa" {
+  account_id   = "gce-pd-csidriver-sa-klustery" 
+  display_name = "Service Account for GCP Compute PD CSI Driver"
+}
+
+locals {
+  csi_roles = {
+    "editor"         = "roles/editor",
+    "storageAdmin"   = "roles/compute.storageAdmin",
+    "saUser"         = "roles/iam.serviceAccountUser",
+    "custom_csi"     = google_project_iam_custom_role.csi_driver_role.id
+  }
+}
+
+data "google_project" "current" {}
+
+resource "google_project_iam_member" "csi_bindings" {
+  for_each = local.csi_roles
+  role     = each.value
+  member   = "serviceAccount:${google_service_account.csi_driver_sa.email}"
+  project  = data.google_project.current.project_id
+}
+
+resource "google_service_account_key" "csi_driver_key" {
+  service_account_id = google_service_account.csi_driver_sa.name
+}
+
+resource "local_file" "csi_driver_key_file" {
+  content  = base64decode(google_service_account_key.csi_driver_key.private_key)
+  filename = pathexpand("~/.secrets/csi_driver_key_file.json")
+}
+
+
+############################################
+# Repo Reader 
+############################################
+
+resource "google_service_account" "k8s_repo_reader" {
+  account_id   = "k8s-repo-reader-klustery" 
+  display_name = "K8s Repo Reader for klustery"
+}
+
+resource "google_project_iam_member" "repo_reader_bindings" {
+  role     = "roles/artifactregistry.reader"
+  member   = "serviceAccount:${google_service_account.k8s_repo_reader.email}"
+  project  = data.google_project.current.project_id
+}
+
+resource "google_service_account_key" "repo_reader_key" {
+  service_account_id = google_service_account.k8s_repo_reader.name
+}
+resource "local_file" "repo_reader_key_file" {
+  content  = base64decode(google_service_account_key.repo_reader_key.private_key)
+  filename = pathexpand("~/.secrets/key.reporeader.klustery.json")
+}
