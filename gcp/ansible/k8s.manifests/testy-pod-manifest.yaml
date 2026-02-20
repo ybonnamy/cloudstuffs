@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: partnerbrandname-testy-pod
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName : gcp-sc
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: partnerbrandname-testy-pod
+  namespace: default
+imagePullSecrets:
+- name: registry-gcp-key
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: partnerbrandname-testy-pod
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: partnerbrandname-testy-pod-cluster
+subjects:
+- kind: ServiceAccount
+  name: partnerbrandname-testy-pod
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: partnerbrandname-testy-pod
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: partnerbrandname-testy-pod
+  namespace: default
+imagePullSecrets:
+- name: registry-gcp-key
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: partnerbrandname-testy-pod
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: partnerbrandname-testy-pod
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: partnerbrandname-testy-pod
+    spec:
+      containers:
+      - command:
+        - bash
+        args:
+        - -c
+        - cp -r helm /tmp/helm && rm -rf ./* && cp -r /tmp/helm . && sleep infinity
+        image: europe-west4-docker.pkg.dev/personalcloud-410910/personalregistry/testymage:yyy1
+        imagePullPolicy: Always
+        name: partnerbrandname-testy-pod
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/partnerbrandname
+          name: partnerbrandname-testy-pod
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      serviceAccount: partnerbrandname-testy-pod
+      serviceAccountName: partnerbrandname-testy-pod
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: partnerbrandname-testy-pod
+        persistentVolumeClaim:
+          claimName: partnerbrandname-testy-pod

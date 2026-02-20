@@ -1,0 +1,8 @@
+---
+k3s_version: "v1.31.2+k3s1"
+systemd_dir: /etc/systemd/system
+k3s_server_dest: /usr/local/bin
+#api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
+api_endpoint: "10.16.0.2"
+token: "{{ lookup('file', '~/.secrets/k3stoken') | trim }}"
+ansible_user: ansible
