@@ -7,3 +7,4 @@ gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID --member serviceAcco
 export GOOGLE_APPLICATION_CREDENTIALS=~/key.json
 export ANSIBLE_PRIVATE_KEY_FILE="~/.ssh/MainKeyPair.pem"
 
+ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_PRIVATE_KEY_FILE=~/.ssh/MainKeyPair.pem ansible-playbook ansible/klustery.yml

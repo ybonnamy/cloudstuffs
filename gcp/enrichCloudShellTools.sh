@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo apt install -y ansible python3-boto3
+sudo apt install -y ansible python3-boto3 python3-kubernetes
 pip install requests "urllib3<2"  "Jinja2<3.1"
 ansible-galaxy install -r ansible/requirements.yml
 cat ~/awscli/install.txt
