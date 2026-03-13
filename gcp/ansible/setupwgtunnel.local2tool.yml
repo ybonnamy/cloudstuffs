@@ -1,0 +1,109 @@
+---
+- name: Configure WireGuard Tunnel between Local and Tool
+  hosts: label_name_tool
+  gather_facts: yes
+  vars:
+    local_secrets_dir: "{{ lookup('env', 'HOME') }}/secrets"
+    remote_secrets_dir: "{{ ansible_user_dir }}/secrets"
+    local_conf_path: "{{ lookup('env', 'HOME') }}/wg/gcpwg.conf"
+    remote_conf_path: "/etc/wireguard/wg0.conf"
+    ansible_user: "linux"
+
+  tasks:
+    # --- PREPARATION ---
+    - name: Create secrets directory on remote host
+      file:
+        path: "{{ remote_secrets_dir }}"
+        state: directory
+        mode: '0700'
+
+    - name: Create secrets directory on local host
+      delegate_to: localhost
+      file:
+        path: "{{ local_secrets_dir }}"
+        state: directory
+        mode: '0700'
+
+    # --- KEY GENERATION ---
+    - name: Generate WireGuard keys on remote host
+      shell: "wg genkey | tee {{ remote_secrets_dir }}/privatekey | wg pubkey > {{ remote_secrets_dir }}/publickey"
+      args:
+        executable: /bin/bash
+
+    - name: Generate WireGuard keys on local host
+      delegate_to: localhost
+      shell: "wg genkey | tee {{ local_secrets_dir }}/privatekey | wg pubkey > {{ local_secrets_dir }}/publickey"
+      args:
+        executable: /bin/bash
+
+    # --- KEY COLLECTION (Reading files) ---
+    - name: Read remote private key
+      slurp:
+        src: "{{ remote_secrets_dir }}/privatekey"
+      register: remote_privkey
+
+    - name: Read remote public key
+      slurp:
+        src: "{{ remote_secrets_dir }}/publickey"
+      register: remote_pubkey
+
+    - name: Read local private key
+      delegate_to: localhost
+      slurp:
+        src: "{{ local_secrets_dir }}/privatekey"
+      register: local_privkey
+
+    - name: Read local public key
+      delegate_to: localhost
+      slurp:
+        src: "{{ local_secrets_dir }}/publickey"
+      register: local_pubkey
+
+    # --- CONFIGURATION DEPLOYMENT ---
+    - name: Deploy gcpwg.conf on local host
+      delegate_to: localhost
+      copy:
+        dest: "{{ local_conf_path }}"
+        content: |
+          [Interface]
+          PrivateKey = {{ local_privkey['content'] | b64decode | trim }}
+          Address = 10.0.0.2/24
+
+          [Peer]
+          PublicKey = {{ remote_pubkey['content'] | b64decode | trim }}
+          Endpoint = tool.gcp.ybonnamy.name:51820
+          AllowedIPs = 10.0.0.0/24, 10.16.0.0/24, 10.15.0.0/24
+          PersistentKeepalive = 25
+
+    - name: Deploy wg0.conf on remote host
+      become: yes
+      copy:
+        dest: "{{ remote_conf_path }}"
+        content: |
+          [Interface]
+          PrivateKey = {{ remote_privkey['content'] | b64decode | trim }}
+          Address = 10.0.0.1/24
+          ListenPort = 51820
+          PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+          PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+          [Peer]
+          PublicKey = {{ local_pubkey['content'] | b64decode | trim }}
+          AllowedIPs = 10.0.0.2/32
+
+    # --- SERVICE ACTIVATION ---
+    - name: Restart WireGuard on remote host (tool)
+      become: yes
+      systemd:
+        name: wg-quick@wg0
+        state: restarted
+        enabled: yes
+
+    - name: Restart WireGuard on local host
+      delegate_to: localhost
+      become: yes
+      shell: |
+        wg-quick down {{ local_conf_path }} || true
+        wg-quick up {{ local_conf_path }}
+      args:
+        executable: /bin/bash
