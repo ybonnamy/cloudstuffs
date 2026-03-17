@@ -593,8 +593,12 @@ resource "google_compute_router_nat" "nat" {
 # Google Compute Engine Persistent Disk CSI Driver
 ############################################
 
+resource "random_id" "role_suffix" {
+  byte_length = 4
+}
+
 resource "google_project_iam_custom_role" "csi_driver_role" {
-      role_id     = "gcp_compute_persistent_disk_csi_driver_custom_role_for_klustery"
+      role_id     = "gcp_persistent_disk_csi_driver_custom_role_${random_id.role_suffix.hex}"
       title       = "Google Compute Engine Persistent Disk CSI Driver Custom Role"
       permissions = [
         "compute.instances.get",
