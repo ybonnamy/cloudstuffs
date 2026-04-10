@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-service-account
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecret }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # REPRISE DE LA COMMANDE ORIGINALE
+          command:
+            {{- .Values.deploy.cmd | toYaml | nindent 12 }}
+          env:
+            - name: VAULT_TOKEN
+              value: {{ .Values.vault.token | quote }}
+          volumeMounts:
+            # Config attendue par l'outil
+            - mountPath: /tmp/config.yml
+              name: config-volume
+              subPath: config.yml
+            # Stockage des données persistant (indispensable en offline)
+            - mountPath: /opt/sekoia
+              name: sre-data
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Release.Name }}-config
+        - name: sre-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc

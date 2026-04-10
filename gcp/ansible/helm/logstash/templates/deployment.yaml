@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "logstash.fullname" . }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "logstash.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "logstash.selectorLabels" . | nindent 8 }}
+    spec:
+      nodeSelector:
+        ansible-group: workers
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: syslog-tcp
+              containerPort: 514
+              protocol: TCP
+              hostPort: {{ .Values.service.port }}
+            - name: syslog-udp
+              containerPort: 514
+              protocol: UDP
+              hostPort: {{ .Values.service.port }}
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: XPACK_MONITORING_ENABLED
+              value: {{ index .Values.config "xpack.monitoring.enabled" | quote }}
+            - name: INGESTION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eventsindex-es-ingestion-user
+                  key: ingestionuser
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/share/logstash/pipeline/logstash.conf
+              subPath: logstash.conf
+            - name: es-ca-volume
+              mountPath: /etc/logstash/certificates/es-ca.crt
+              subPath: es-ca.crt
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "logstash.fullname" . }}-config
+        - name: es-ca-volume
+          configMap:
+            name: elasticsearch-ca-bundle

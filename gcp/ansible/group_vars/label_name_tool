@@ -1,1 +1,2 @@
 longtaskallowed: false
+ansible_user: "gcpuser"

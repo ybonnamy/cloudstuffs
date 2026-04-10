@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kibana-cert
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: kibana-tls-cert
+  issuerRef:
+    name: {{ .Values.ingress.issuer | default "letsencrypt-prod" }}
+    kind: ClusterIssuer
+  commonName: {{ .Values.ingress.host }}
+  dnsNames:
+  - {{ .Values.ingress.host }}

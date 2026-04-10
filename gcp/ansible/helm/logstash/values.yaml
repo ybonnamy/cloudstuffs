@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "8.11.0"
+  pullPolicy: IfNotPresent
+
+elasticsearch:
+  host: "https://eventsindex-es-http.support:9200"
+  user: "ingestionuser"
+
+# Configuration Logstash
+config:
+  xpack.monitoring.enabled: "false"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+service:
+  type: ClusterIP
+  port: 10514

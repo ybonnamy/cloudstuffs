@@ -1,0 +1,45 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: my-cluster
+  namespace: {{ .Release.Namespace | default "support" }}
+spec:
+  kafka:
+    version: 3.2.3
+    replicas: {{ .Values.replicaCount | default 3 }}
+    listeners:
+      - name: plaintext
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: {{ .Values.config.replicationFactor | default 3 }}
+      transaction.state.log.replication.factor: {{ .Values.config.replicationFactor | default 3 }}
+      transaction.state.log.min.isr: 2
+      default.replication.factor: {{ .Values.config.replicationFactor | default 3 }}
+      min.insync.replicas: 2
+      inter.broker.protocol.version: "3.2"
+    storage:
+      type: persistent-claim
+      size: {{ .Values.storage.size | default "100Gi" }}
+      class: {{ .Values.storage.class | default "pd-balanced" }}
+    resources:
+      requests:
+        cpu: {{ .Values.resources.requests.cpu }}
+        memory: {{ .Values.resources.requests.memory }}
+      limits:
+        cpu: {{ .Values.resources.limits.cpu }}
+        memory: {{ .Values.resources.limits.memory }}
+  zookeeper:
+    replicas: {{ .Values.config.zookeeperReplicas | default 3 }}
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      class: {{ .Values.storage.class | default "pd-balanced" }}
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

@@ -126,6 +126,10 @@ resource "google_compute_subnetwork" "klustery-subnetwork" {
 }
 
 #required for tcp-proxy-kube-* google_compute_region_target_tcp_proxy
+#resource "time_sleep" "wait_few_seconds" {
+#  destroy_duration = "300s"
+#}
+
 resource "google_compute_subnetwork" "klustery-subnetwork-proxyonly" {
   name          = "klustery-subnetwork-proxyonly"
   ip_cidr_range = "240.1.0.0/24"
@@ -133,6 +137,7 @@ resource "google_compute_subnetwork" "klustery-subnetwork-proxyonly" {
   stack_type = "IPV4_IPV6"
   purpose = "REGIONAL_MANAGED_PROXY"
   role    = "ACTIVE"
+#  depends_on = [time_sleep.wait_few_seconds]
 }
 
 
@@ -662,4 +667,108 @@ resource "google_service_account_key" "repo_reader_key" {
 resource "local_file" "repo_reader_key_file" {
   content  = base64decode(google_service_account_key.repo_reader_key.private_key)
   filename = pathexpand("~/.secrets/key.reporeader.klustery.json")
+}
+
+
+############################################
+# SSH KNOWN_HOSTS PREPARATION
+############################################
+
+#resource "local_file" "ssh_prepare_klustery" {
+#  content  = <<-EOT
+#    #!/bin/bash
+#    # Script généré par Terraform pour préparer SSH pour le cluster klustery
+#    %{ for ip in flatten([
+#      google_compute_instance.worker[*].network_interface[0].network_ip,
+#      google_compute_instance.storage[*].network_interface[0].network_ip,
+#      google_compute_instance.control_plane[*].network_interface[0].network_ip
+#    ]) ~}
+#    ssh-keygen -R ${ip} 2>/dev/null
+#    ssh-keyscan -H ${ip} >> ~/.ssh/known_hosts 2>/dev/null
+#    %{ endfor ~}
+#  EOT
+#  filename        = "${path.module}/prepare_klustery_ssh.sh"
+#  file_permission = "0755"
+#}
+#
+#resource "null_resource" "run_ssh_prepare_klustery" {
+#  depends_on = [
+#    local_file.ssh_prepare_klustery,
+#    google_compute_instance.worker,
+#    google_compute_instance.storage,
+#    google_compute_instance.control_plane
+#  ]
+#
+#  triggers = {
+#    script_content = local_file.ssh_prepare_klustery.content
+#  }
+#
+#  provisioner "local-exec" {
+#    command = "bash ${local_file.ssh_prepare_klustery.filename}"
+#    on_failure = continue
+#  }
+#}
+#
+
+############################################
+# EXTERNAL LOAD BALANCING (Internet Access)
+############################################
+
+# IP Publique Statique
+resource "google_compute_address" "worker_lb_external_static" {
+  name         = "kube-node-lb-external-static-ip"
+  region       = var.region_name
+  address_type = "EXTERNAL"
+}
+
+# Health Check HTTP pour Traefik
+resource "google_compute_http_health_check" "traefik_health" {
+  name               = "hc-traefik-http"
+  request_path       = "/ping"
+  port               = 80
+  check_interval_sec = 10
+  timeout_sec        = 5
+}
+
+# Target Pool pour les workers
+resource "google_compute_target_pool" "worker_pool" {
+  name   = "worker-pool"
+  region = var.region_name
+
+  instances = google_compute_instance.worker[*].self_link
+
+  health_checks = [
+    google_compute_http_health_check.traefik_health.name
+  ]
+}
+
+# Forwarding Rules Externes (80 & 443)
+resource "google_compute_forwarding_rule" "worker_lb_external_80" {
+  name                  = "kube-node-external-80"
+  region                = var.region_name
+  load_balancing_scheme = "EXTERNAL"
+  target                = google_compute_target_pool.worker_pool.id
+  port_range            = "80"
+  ip_address            = google_compute_address.worker_lb_external_static.address
+}
+
+resource "google_compute_forwarding_rule" "worker_lb_external_443" {
+  name                  = "kube-node-external-443"
+  region                = var.region_name
+  load_balancing_scheme = "EXTERNAL"
+  target                = google_compute_target_pool.worker_pool.id
+  port_range            = "443"
+  ip_address            = google_compute_address.worker_lb_external_static.address
+}
+
+############################################
+# DNS RECORD
+############################################
+
+resource "aws_route53_record" "kibana" {
+  zone_id = data.aws_route53_zone.ybonnamyname.zone_id
+  name    = "kibana.klustery.${var.publicdomainname}"
+  type    = "A"
+  ttl     = 300
+  records = [google_compute_address.worker_lb_external_static.address]
 }

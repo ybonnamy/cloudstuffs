@@ -1,0 +1,15 @@
+# Values for the cert-manager dependency
+cert-manager:
+  installCRDs: false
+  
+  # For resource optimization on your e2-medium nodes
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+issuer:
+  email: "yann_bonnamy@yahoo.fr"

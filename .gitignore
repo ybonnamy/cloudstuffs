@@ -38,3 +38,7 @@ terraform.rc
 
 # variables 
 */ansible/tf_ansible_global_vars_file.yml
+
+# Helm
+**/charts/*.tgz
+**/charts/

@@ -1,0 +1,13 @@
+---
+# Orchestrateur global pour l'infrastructure Klustery
+# Ce playbook appelle les 3 étapes majeures dans l'ordre de dépendance :
+# A. Tunnel Réseau -> B. Cluster K8s & CSI -> C. Composants Helm (ES, Kafka, etc.)
+
+- name: STEP A - Configure Network Connectivity
+  import_playbook: subplaybooks/klustery.A.wgtunnel.local2tool.yml
+
+- name: STEP B - Deploy and Configure K3s Cluster
+  import_playbook: subplaybooks/klustery.B.k8s.yml
+
+- name: STEP C - Deploy Infrastructure Components (Helm)
+  import_playbook: subplaybooks/klustery.C.infra.yml

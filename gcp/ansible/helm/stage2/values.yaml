@@ -1,0 +1,32 @@
+image:
+  registry: europe-west4-docker.pkg.dev/personalcloud-410910/personalregistry
+  name: testymage
+  tag: "yyy1"
+  pullPolicy: Always
+  pullSecret: registry-gcp-key
+
+deploy:
+  cmd: ["uv", "run", "./platform-installer", "pause"]
+
+
+cluster_role:
+  apigroups: '["*"]'
+  resources: '["*"]'
+  verbs: '["*"]'
+
+
+config:
+  global:
+    offline: true
+  # contenu de region.yaml ?
+  content:
+    base: configs/xdr-base.yaml
+    global:
+      region: GCP1
+
+vault:
+  token: "v.vYourTokenHere"
+
+persistence:
+  storageClass: gcp-sc
+  size: 5Gi

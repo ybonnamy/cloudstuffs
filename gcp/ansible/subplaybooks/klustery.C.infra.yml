@@ -1,0 +1,290 @@
+- name: Deploy Integrated Infrastructure (Cert-Manager, Trust-Manager & Apps)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    k8s_kubeconfig: "~/.kube/config"
+    cert_manager_namespace: "cert-manager"
+    infra_namespace: "support"
+    ingest_namespace: "ingest"
+
+  tasks:
+
+    # --- STEP 0: validate k8s + GCP driver with manifest first and helm second  ---
+
+    - name: Deploy testy-pod
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        state: present
+        src: "{{ playbook_dir }}/../k8s.manifests/testy-pod-manifest.yaml"        
+
+    - name: Deploy Stage2 pod 
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: partner-testy-stage2
+        chart_ref: "{{ playbook_dir }}/../helm/stage2"
+        release_namespace: "default"
+
+    # --- STEP 1: need cert-manager
+
+    - name: Create cert-manager Namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: "{{ cert_manager_namespace }}"
+        kind: Namespace
+        state: present
+
+    - name: Check for local Root CA secrets
+      ansible.builtin.stat:
+        path: "~/.secrets/klustery-root-ca.crt"
+      register: root_ca_file
+
+    - name: Pre-seed Root CA secret in cert-manager namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: klustery-root-ca-secret
+            namespace: "{{ cert_manager_namespace }}"
+          type: kubernetes.io/tls
+          data:
+            tls.crt: "{{ lookup('file', '~/.secrets/klustery-root-ca.crt') | b64encode }}"
+            tls.key: "{{ lookup('file', '~/.secrets/klustery-root-ca.key') | b64encode }}"
+      when: root_ca_file.stat.exists
+
+    - name: Install cert-manager CRDs
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        src: "https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.crds.yaml"
+        state: present
+
+    - name: Update Cert-Manager Helm dependencies
+      ansible.builtin.command:
+        cmd: "helm dependency update {{ playbook_dir }}/../helm/cert-manager"
+      changed_when: false
+
+    - name: Deploy cert-manager (wrapper chart)
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: cert-manager
+        chart_ref: "{{ playbook_dir }}/../helm/cert-manager"
+        release_namespace: "{{ cert_manager_namespace }}"
+        wait: yes
+
+    # --- STEP 2: TRUST-MANAGER ---
+    - name: Update Trust-Manager Helm dependencies
+      ansible.builtin.command:
+        cmd: "helm dependency update {{ playbook_dir }}/../helm/trust-manager"
+      changed_when: false
+
+    - name: Install trust-manager CRDs
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        src: "https://raw.githubusercontent.com/cert-manager/trust-manager/v0.7.0/deploy/crds/trust.cert-manager.io_bundles.yaml"
+        state: present
+
+    - name: Deploy trust-manager
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: trust-manager
+        chart_ref: "{{ playbook_dir }}/../helm/trust-manager"
+        release_namespace: "{{ cert_manager_namespace }}"
+        wait: yes
+
+    # --- STEP 3: ES ---
+    
+    - name: Create Support Namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: "{{ infra_namespace }}"
+        kind: Namespace
+        state: present
+
+    - name: Pre-seed Client cert secret in support namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: trusted-user-one-tls
+            namespace: "{{ infra_namespace }}"
+          type: kubernetes.io/tls
+          data:
+            tls.crt: "{{ lookup('file', '~/.secrets/trusted-user-one.crt') | b64encode }}"
+            tls.key: "{{ lookup('file', '~/.secrets/trusted-user-one.key') | b64encode }}"
+
+    - name: Pre-seed Elastic user password secret in support namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: eventsindex-es-elastic-user
+            namespace: "{{ infra_namespace }}"
+          type: Opaque
+          data:
+            elastic: "{{ lookup('file', '~/.secrets/elastic-password.txt') | b64encode }}"
+
+
+    - name: Get storage nodes count
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        kind: Node
+        label_selectors:
+          - ansible-group = storage
+      register: storage_nodes_list
+
+    - name: Deploy Elasticsearch & Kibana
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: elasticsearch
+        chart_ref: "{{ playbook_dir }}/../helm/elasticsearch"
+        release_namespace: "{{ infra_namespace }}"
+        values:
+          replicaCount: "{{ storage_nodes_list.resources | length }}"
+          storage:
+            size: "20Gi"
+          operator:
+            namespace: "{{ infra_namespace }}"
+          ingress:
+            enabled: true
+            host: "kibana.klustery.gcp.ybonnamy.name"
+          exporter:
+            password: "{{ lookup('file', '~/.secrets/elastic-password.txt') }}"
+
+    - name: Wait for Elasticsearch to be ready
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        kind: Elasticsearch
+        name: eventsindex
+        namespace: "{{ infra_namespace }}"
+      register: es_status
+      until: 
+        - es_status.resources | length > 0
+        - es_status.resources[0].status.health is defined
+        - es_status.resources[0].status.health in ['green', 'yellow']
+      retries: 30
+      delay: 10
+
+    - name: Get Elasticsearch CA from support namespace
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        kind: Secret
+        name: eventsindex-es-http-ca-internal
+        namespace: "{{ infra_namespace }}"
+      register: es_ca_secret
+      until: es_ca_secret.resources | length > 0
+      retries: 10
+      delay: 5
+
+    - name: Sync Elasticsearch CA to ConfigMap in cert-manager namespace for trust-manager
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: elasticsearch-ca-pem
+            namespace: "{{ cert_manager_namespace }}"
+          data:
+            ca.crt: "{{ es_ca_secret.resources[0].data['tls.crt'] | b64decode }}"
+
+    # --- STEP 4: PREPARE INGEST ---
+    
+    - name: Create Ingest Namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: "{{ ingest_namespace }}"
+        kind: Namespace
+        state: present
+
+    - name: Pre-seed Ingestion user password secret in ingest namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: eventsindex-es-ingestion-user
+            namespace: "{{ ingest_namespace }}"
+          type: Opaque
+          data:
+            ingestionuser: "{{ lookup('file', '~/.secrets/ingestionuser-password') | b64encode }}"
+
+
+    - name: Create ingestion_role via Elasticsearch API
+      ansible.builtin.shell: |
+        ELASTIC_PASSWORD=$(kubectl get secret eventsindex-es-elastic-user -n {{ infra_namespace }} -o jsonpath='{.data.elastic}' | base64 -d)
+        kubectl exec -n {{ infra_namespace }} eventsindex-es-node-0 -c elasticsearch -- curl -s -k -u "elastic:$ELASTIC_PASSWORD" -X POST "https://localhost:9200/_security/role/ingestion_role" -H 'Content-Type: application/json' -d'
+        {
+          "cluster": ["manage"],
+          "indices": [
+            {
+              "names": [ "*index*" ],
+              "privileges": ["all"]
+            }
+          ]
+        }'
+      register: role_creation
+      changed_when: "'\"created\":true' in role_creation.stdout or '\"updated\":true' in role_creation.stdout"
+
+    - name: Create ingestionuser via Elasticsearch API
+      ansible.builtin.shell: |
+        ELASTIC_PASSWORD=$(kubectl get secret eventsindex-es-elastic-user -n {{ infra_namespace }} -o jsonpath='{.data.elastic}' | base64 -d)
+        INGESTION_PASSWORD="{{ lookup('file', '~/.secrets/ingestionuser-password') }}"
+        kubectl exec -n {{ infra_namespace }} eventsindex-es-node-0 -c elasticsearch -- curl -s -k -u "elastic:$ELASTIC_PASSWORD" -X POST "https://localhost:9200/_security/user/ingestionuser" -H 'Content-Type: application/json' -d"
+        {
+          \"password\" : \"$INGESTION_PASSWORD\",
+          \"roles\" : [ \"ingestion_role\" ],
+          \"full_name\" : \"Logstash Ingestion User\"
+        }"
+      register: user_creation
+      changed_when: "'\"created\":true' in user_creation.stdout or '\"updated\":true' in user_creation.stdout"
+
+
+    # --- STEP 5: BASIC INGESTION WORKER ---
+
+
+    - name: Deploy Logstash for Syslog ingestion
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: logstash
+        chart_ref: "{{ playbook_dir }}/../helm/logstash"
+        release_namespace: "{{ ingest_namespace }}"
+        wait: yes
+
+
+    # --- STEP 6: KAFKA ---
+
+    - name: Add Strimzi Helm Repo
+      kubernetes.core.helm_repository:
+        name: strimzi
+        repo_url: "https://strimzi.io/charts/"
+
+    - name: Install Strimzi Operator
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: strimzi-operator
+        chart_ref: strimzi/strimzi-kafka-operator
+        release_namespace: "{{ infra_namespace }}"
+
+    - name: Deploy Kafka Cluster
+      kubernetes.core.helm:
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        name: kafka-cluster
+        chart_ref: "{{ playbook_dir }}/../helm/strimzi"
+        release_namespace: "{{ infra_namespace }}"
+        values:
+          replicaCount: 3
+          storage:
+            size: "50Gi"
+

@@ -1,0 +1,14 @@
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: elasticsearch-ca-bundle
+spec:
+  sources:
+  - configMap:
+      name: elasticsearch-ca-pem
+      key: ca.crt
+  target:
+    # On distribue dans tous les namespaces en format SECRET pour Traefik
+    namespaceSelector: {}
+    secret:
+      key: ca.crt

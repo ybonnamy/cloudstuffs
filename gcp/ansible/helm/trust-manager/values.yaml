@@ -1,0 +1,12 @@
+# Config for trust-manager
+trust-manager:
+  crds:
+    enabled: false
+  app:
+    trust:
+      namespace: cert-manager
+  secretTargets:
+    enabled: true
+    authorizedSecrets:
+      - klustery-ca-bundle
+      - elasticsearch-ca-bundle

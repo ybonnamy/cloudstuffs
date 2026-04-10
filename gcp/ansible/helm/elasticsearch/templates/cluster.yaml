@@ -1,0 +1,90 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: eventsindex
+  namespace: {{ .Release.Namespace | default "support" }}
+spec:
+  version: {{ .Values.version | default "8.4.3" }}
+  secureSettings:
+  - secretName: snapshot-settings
+  nodeSets:
+  - name: node
+    count: {{ .Values.replicaCount | default 3 }}
+    podTemplate:
+      metadata:
+        annotations:
+          prometheus.io/port: "9114"
+          prometheus.io/scrape: "true"
+      spec:
+        nodeSelector:
+          ansible-group: storage
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  elasticsearch.k8s.elastic.co/cluster-name: eventsindex
+              topologyKey: kubernetes.io/hostname
+        containers:
+        - name: exporter
+          image: quay.io/prometheuscommunity/elasticsearch-exporter:v1.3.0
+          command:
+          - /bin/sh
+          - -c
+          - |
+            /bin/elasticsearch_exporter --es.uri=https://exporter:$EXPORTER_PASSWORD@127.0.0.1:9200 --es.ssl-skip-verify --es.timeout 15s
+          envFrom:
+          - secretRef:
+              name: elasticsearch-exporter
+        - name: elasticsearch
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | default 2 }}
+              memory: {{ .Values.resources.requests.memory | default "4Gi" }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | default 4 }}
+              memory: {{ .Values.resources.limits.memory | default "6Gi" }}
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.storage.size | default "50Gi" }}
+        storageClassName: {{ .Values.storage.class | default "pd-balanced" }}
+    config:
+      node.store.allow_mmap: false
+      node.attr.data: extra-hot
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: eventsindex
+  namespace: {{ .Release.Namespace | default "support" }}
+spec:
+  version: {{ .Values.version | default "8.4.3" }}
+  count: 1
+  elasticsearchRef:
+    name: eventsindex
+  http:
+    tls:
+      certificate:
+        secretName: kibana-internal-tls-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kibana-internal-cert
+  namespace: {{ .Release.Namespace | default "support" }}
+spec:
+  secretName: kibana-internal-tls-cert
+  issuerRef:
+    name: klustery-ca-issuer
+    kind: ClusterIssuer
+  dnsNames:
+  - eventsindex-kb-http
+  - eventsindex-kb-http.{{ .Release.Namespace | default "support" }}
+  - eventsindex-kb-http.{{ .Release.Namespace | default "support" }}.svc.cluster.local
+  - localhost

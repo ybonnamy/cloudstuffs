@@ -1,0 +1,8 @@
+# L'émetteur global capable de signer des certificats clients (utilise le secret pré-injecté)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: klustery-client-issuer
+spec:
+  ca:
+    secretName: klustery-root-ca-secret

@@ -1,0 +1,57 @@
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: kibana-tls-option
+  namespace: {{ .Release.Namespace }}
+spec:
+  minVersion: VersionTLS12
+  sniStrict: false
+  clientAuth:
+    # On exige le certificat client et on le vérifie contre notre CA racine
+    secretNames:
+      - klustery-ca-bundle
+    clientAuthType: RequireAndVerifyClientCert
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: kibana-buffering
+  namespace: {{ .Release.Namespace }}
+spec:
+  buffering:
+    retryExpression: "IsNetworkError() && Attempts() < 2"
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: kibana-transport
+  namespace: {{ .Release.Namespace }}
+spec:
+  serverName: eventsindex-kb-http
+  rootCAsSecrets:
+    - klustery-ca-bundle
+---
+{{- if .Values.ingress.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-kibana-ingressroute
+  namespace: {{ .Release.Namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host({{ .Values.ingress.host | quote }})
+      kind: Rule
+      services:
+        - name: eventsindex-kb-http
+          port: 5601
+          serversTransport: kibana-transport
+      middlewares:
+        - name: kibana-buffering
+  tls:
+    secretName: kibana-tls-cert
+    options:
+      name: kibana-tls-option
+      namespace: {{ .Release.Namespace }}
+{{- end }}

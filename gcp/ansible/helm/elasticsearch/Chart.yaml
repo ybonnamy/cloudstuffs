@@ -1,0 +1,6 @@
+apiVersion: v2
+name: elasticsearch
+description: A Helm chart for ECK Operator and Elasticsearch Cluster
+type: application
+version: 0.1.13
+appVersion: "8.4.3"

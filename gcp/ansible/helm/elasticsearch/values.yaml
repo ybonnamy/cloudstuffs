@@ -1,0 +1,28 @@
+# Default values for elasticsearch.
+replicaCount: 3
+version: 8.4.3
+
+storage:
+  size: 10Gi
+  class: gcp-sc
+
+resources:
+  requests:
+    cpu: 0.5
+    memory: 1Gi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+topology:
+  enabled: false
+  zones: []
+
+exporter:
+  password: "changeme"
+
+ingress:
+  enabled: true
+  host: "kibana.klustery.gcp.ybonnamy.name"
+  issuer: "klustery-ca-issuer"
+  annotations: {}

@@ -1,0 +1,23 @@
+# Default values for kafka using public images.
+replicaCount: 3
+
+# Registry public pour Strimzi
+image:
+  registry: quay.io/strimzi
+  tag: 0.31.1-kafka-3.2.3
+
+storage:
+  size: 100Gi
+  class: pd-balanced
+
+resources:
+  requests:
+    cpu: 1
+    memory: 2Gi
+  limits:
+    cpu: 2
+    memory: 4Gi
+
+config:
+  replicationFactor: 3
+  zookeeperReplicas: 3
